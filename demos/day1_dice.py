@@ -1,4 +1,4 @@
-"""Day 1 of ninada: day1_dice.py.
+"""Day 1 of sutradhara: day1_dice.py.
 
 Smallest possible demo of the loop: one hand-written tool, no framework
 scaffolding, so the user/assistant/tool/assistant transcript is visible end
@@ -11,8 +11,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from ninada import provider
-from ninada.loop import run_loop
+from sutradhara import provider
+from sutradhara.loop import run_loop
 
 
 class RollDice:

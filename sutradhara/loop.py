@@ -1,4 +1,4 @@
-"""Day 1 of ninada: loop.py.
+"""Day 1 of sutradhara: loop.py.
 
 Teaches the agent loop itself: call the model, run any tool calls it asked
 for, feed results back, repeat. Design rule: a tool raising an exception is
