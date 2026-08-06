@@ -1,1 +1,7 @@
-"""Day 1 of sutradhara, a minimal agent harness. Filled in on day 4."""
+"""sutradhara: a minimal agent harness. Public surface for `from sutradhara import ...`."""
+
+from .harness import Harness
+from .security import Policy
+from .tools import Tool, tool
+
+__all__ = ["Harness", "Policy", "Tool", "tool"]
