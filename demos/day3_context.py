@@ -1,8 +1,10 @@
 """Day 3 of sutradhara: day3_context.py.
 
 Demo of the full day-3 stack: core_tools() and Policy from day 2, plus
-context.compact() wired into run_loop's before_turn socket and a skills
-catalog exposed through the system prompt and a use_skill tool. Usage:
+context.compact() wired into run_loop's before_turn socket, a skills catalog
+exposed through the system prompt and a use_skill tool, and memory.py's
+build_system_prompt()/remember() giving the agent durable, cross-conversation
+project memory. Usage:
     python3 demos/day3_context.py "<task>" [budget_tokens] [workdir]
 """
 
@@ -15,17 +17,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sutradhara import provider
 from sutradhara.context import compact
 from sutradhara.loop import run_loop
+from sutradhara.memory import build_system_prompt, remember
 from sutradhara.security import Policy
 from sutradhara.skills import catalog_prompt, read_skill
 from sutradhara.tools import Tool, core_tools
 
-BASE_SYSTEM = (
-    "You are a careful coding assistant with file and shell tools scoped to a "
-    "working directory. Use write_file/read_file/edit_file for file operations "
-    "and bash for running commands (like verification checks) — don't shortcut "
-    "file operations through bash when the user specifies which tool to use "
-    "and how. Follow the user's stated procedure literally, step by step. "
-    "Verify your own work, and give a clear final answer."
+TOOL_GUIDANCE = (
+    "Use write_file/read_file/edit_file for file operations and bash for "
+    "running commands (like verification checks) — don't shortcut file "
+    "operations through bash when the user specifies which tool to use and "
+    "how. Follow the user's stated procedure literally, step by step."
 )
 
 
@@ -59,6 +60,25 @@ def _use_skill_tool(workdir):
     )
 
 
+def _remember_tool(workdir):
+    """Build the remember Tool, closed over workdir, wrapping memory.remember."""
+    def run(note):
+        return remember(workdir, note)
+    return Tool(
+        name="remember",
+        spec={"schema": {
+            "name": "remember",
+            "description": "Save a durable note about this project for future conversations",
+            "parameters": {
+                "type": "object",
+                "properties": {"note": {"type": "string", "description": "The fact to remember"}},
+                "required": ["note"],
+            },
+        }},
+        run=run,
+    )
+
+
 def main():
     task = sys.argv[1] if len(sys.argv) > 1 else "List the files here."
     budget_tokens = int(sys.argv[2]) if len(sys.argv) > 2 else 8000
@@ -67,13 +87,14 @@ def main():
     print(f"user: {task}")
 
     tools = {t.name: t for t in core_tools(workdir)}
-    skill_tool = _use_skill_tool(workdir)
-    tools[skill_tool.name] = skill_tool
+    for extra_tool in (_use_skill_tool(workdir), _remember_tool(workdir)):
+        tools[extra_tool.name] = extra_tool
 
-    system = BASE_SYSTEM
+    extra = TOOL_GUIDANCE
     skills_text = catalog_prompt(workdir)
     if skills_text:
-        system += "\n\n" + skills_text
+        extra += "\n\n" + skills_text
+    system = build_system_prompt(workdir, extra=extra)
 
     def before_turn(msgs):
         before = len(msgs)
