@@ -76,37 +76,43 @@ class Harness:
         return bool(self.messages)
 
     def run(self, task):
-        """Run one task to completion, persisting every new message as it lands."""
+        """Run one task to completion, persisting every message the instant it lands.
+
+        Persistence rides on_event, not before_turn: before_turn only fires
+        once at the top of each turn, so a message appended mid-turn (an
+        assistant's tool_calls, or a tool's result) would stay unwritten
+        until the *next* turn's before_turn call — meaning a crash mid-tool
+        could lose the whole turn, not just the interrupted call. on_event
+        fires the instant each message is appended, so a kill -9 anywhere
+        loses at most the just-started tool call, which session.py's
+        repair() then reconstructs on resume.
+        """
         if self.persist and not self.session_path:
             self.session_path = session.new_session(self.workdir, label=task[:32])
 
-        recorded = len(self.messages)
-        self.messages.append({"role": "user", "text": task})
-        recorded = self._flush(recorded)
+        user_message = {"role": "user", "text": task}
+        self.messages.append(user_message)
+        self._persist(user_message)
 
         def before_turn(msgs):
-            nonlocal recorded
-            self.messages = msgs
-            recorded = self._flush(recorded)
-            self.messages = context.compact(self.model, self.messages, self.budget_tokens)
-            recorded = min(recorded, len(self.messages))
+            self.messages = context.compact(self.model, msgs, self.budget_tokens)
             return self.messages
 
-        answer = run_loop(self.model, self.system, self.messages, self.tools,
-                           self.on_event, self.policy.check, max_turns=self.max_turns,
-                           before_turn=before_turn)
+        def on_event(kind, payload):
+            if kind == "assistant":
+                self._persist({"role": "assistant", "text": payload["text"],
+                                "tool_calls": payload["tool_calls"]})
+            elif kind == "tool_end":
+                call = payload["call"]
+                self._persist({"role": "tool", "name": call["name"],
+                                "text": str(payload["result"])})
+            self.on_event(kind, payload)
 
-        # before_turn only runs ahead of a model call, so the loop's very last
-        # message — this exact shape, on every exit path — needs an explicit
-        # flush here; nothing else observes it.
-        self.messages.append({"role": "assistant", "text": answer, "tool_calls": []})
-        self._flush(recorded)
+        return run_loop(self.model, self.system, self.messages, self.tools,
+                         on_event, self.policy.check, max_turns=self.max_turns,
+                         before_turn=before_turn)
 
-        return answer
-
-    def _flush(self, recorded):
-        """Persist self.messages[recorded:] to the session file; return the new watermark."""
+    def _persist(self, message):
+        """Durably append one message to the session file, if persistence is on."""
         if self.session_path:
-            for msg in self.messages[recorded:]:
-                session.append(self.session_path, msg)
-        return len(self.messages)
+            session.append(self.session_path, message)
