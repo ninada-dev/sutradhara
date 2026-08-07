@@ -1,4 +1,4 @@
-"""Day 3 of sutradhara: skills.py.
+"""sutradhara: skills.py.
 
 Teaches skill discovery: a skill is a directory holding a SKILL.md, found by
 walking workdir/skills/ once. Only its description goes in the system prompt

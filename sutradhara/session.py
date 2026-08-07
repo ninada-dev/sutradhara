@@ -1,4 +1,4 @@
-"""Day 4 of sutradhara: session.py.
+"""sutradhara: session.py.
 
 Teaches durable sessions: every message is appended to a JSONL file the
 instant it happens, so a crash mid-run loses at most one in-flight tool call.

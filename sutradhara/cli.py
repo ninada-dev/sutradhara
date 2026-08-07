@@ -1,4 +1,4 @@
-"""Day 5 of sutradhara: cli.py.
+"""sutradhara: cli.py.
 
 Teaches the front door: turning Harness into something you run from a
 terminal, headless (-p) or interactive. Design rule: the CLI only prints and

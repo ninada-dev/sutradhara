@@ -1,4 +1,4 @@
-"""Day 1 of sutradhara: provider.py.
+"""sutradhara: provider.py.
 
 Teaches the wire boundary between a neutral, storage-friendly message format
 and the Gemini REST API. Design rule: nothing above this module should ever

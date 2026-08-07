@@ -1,4 +1,4 @@
-"""Day 2 of sutradhara: security.py.
+"""sutradhara: security.py.
 
 Teaches the policy layer that plugs into loop.py's before_tool socket. Design
 rule: deny patterns are a blocklist, not a sandbox — they catch known-bad

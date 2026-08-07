@@ -1,11 +1,10 @@
-"""Day 3 of sutradhara: day3_context.py.
+"""sutradhara: memory_skills.py.
 
-Demo of the full day-3 stack: core_tools() and Policy from day 2, plus
-context.compact() wired into run_loop's before_turn socket, a skills catalog
-exposed through the system prompt and a use_skill tool, and memory.py's
-build_system_prompt()/remember() giving the agent durable, cross-conversation
-project memory. Usage:
-    python3 demos/day3_context.py "<task>" [budget_tokens] [workdir]
+Demo of core_tools() and Policy, plus context.compact() wired into
+run_loop's before_turn socket, a skills catalog exposed through the system
+prompt and a use_skill tool, and memory.py's build_system_prompt()/remember()
+giving the agent durable, cross-conversation project memory. Usage:
+    python3 demos/memory_skills.py "<task>" [budget_tokens] [workdir]
 """
 
 import sys
@@ -82,7 +81,7 @@ def _remember_tool(workdir):
 def main():
     task = sys.argv[1] if len(sys.argv) > 1 else "List the files here."
     budget_tokens = int(sys.argv[2]) if len(sys.argv) > 2 else 8000
-    workdir = sys.argv[3] if len(sys.argv) > 3 else tempfile.mkdtemp(prefix="sutradhara_day3_")
+    workdir = sys.argv[3] if len(sys.argv) > 3 else tempfile.mkdtemp(prefix="sutradhara_memory_skills_")
     print(f"scratch dir: {workdir}")
     print(f"user: {task}")
 

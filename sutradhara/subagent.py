@@ -1,4 +1,4 @@
-"""Day 4 of sutradhara: subagent.py.
+"""sutradhara: subagent.py.
 
 Teaches delegation: a spawn_agent tool that hands a self-contained task to a
 fresh Harness with its own clean context. Design rule: depth is capped so a

@@ -53,15 +53,15 @@ running — the session log is already safe on disk (every message is
 persisted the instant it's produced, not batched) — and `--resume` picks up
 exactly where it left off, with any interrupted tool call clearly marked.
 
-## Day-by-day anatomy
+## Anatomy
 
-| Day | Files | Teaches |
-|---|---|---|
-| 1 | `provider.py`, `loop.py` | The Gemini wire format and the turn-taking agent loop itself |
-| 2 | `tools.py`, `security.py` | Turning functions into model-callable tools, sandboxed to a directory; a policy layer that gates what runs |
-| 3 | `context.py`, `memory.py`, `skills.py` | Compacting a long transcript; a per-project memory file folded into the system prompt; on-demand skill loading |
-| 4 | `session.py`, `subagent.py`, `harness.py`, `__init__.py` | Durable, crash-repairable sessions; delegating to depth-capped sub-agents; `Harness`, the class that composes everything above |
-| 5 | `cli.py`, `fleet.py`, `__main__.py` | The terminal front door; running many `Harness` instances in parallel |
+| Files | Teaches |
+|---|---|
+| `provider.py`, `loop.py` | The Gemini wire format and the turn-taking agent loop itself |
+| `tools.py`, `security.py` | Turning functions into model-callable tools, sandboxed to a directory; a policy layer that gates what runs |
+| `context.py`, `memory.py`, `skills.py` | Compacting a long transcript; a per-project memory file folded into the system prompt; on-demand skill loading |
+| `session.py`, `subagent.py`, `harness.py`, `__init__.py` | Durable, crash-repairable sessions; delegating to depth-capped sub-agents; `Harness`, the class that composes everything above |
+| `cli.py`, `fleet.py`, `__main__.py` | The terminal front door; running many `Harness` instances in parallel |
 
 Every file opens with a module docstring naming what it teaches and the
 design rule it embodies — that's the intended way to read this codebase,

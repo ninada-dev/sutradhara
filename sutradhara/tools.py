@@ -1,4 +1,4 @@
-"""Day 2 of sutradhara: tools.py.
+"""sutradhara: tools.py.
 
 Teaches how a plain function becomes something the model can call: a JSON
 schema plus a runnable. Design rule: every filesystem tool routes through one

@@ -1,4 +1,4 @@
-"""Day 5 of sutradhara: __main__.py.
+"""sutradhara: __main__.py.
 
 Lets `python3 -m sutradhara` run the real CLI directly from the repo root.
 """

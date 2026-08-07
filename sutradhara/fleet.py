@@ -1,4 +1,4 @@
-"""Day 5 of sutradhara: fleet.py.
+"""sutradhara: fleet.py.
 
 Teaches parallel composition: running many independent Harness instances at
 once, e.g. one per repository or one per subtask. Design rule: one job's

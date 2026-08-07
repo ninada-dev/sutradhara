@@ -1,4 +1,4 @@
-"""Day 1 of sutradhara: day1_dice.py.
+"""sutradhara: dice.py.
 
 Smallest possible demo of the loop: one hand-written tool, no framework
 scaffolding, so the user/assistant/tool/assistant transcript is visible end

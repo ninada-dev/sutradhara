@@ -1,4 +1,4 @@
-"""Day 3 of sutradhara: memory.py.
+"""sutradhara: memory.py.
 
 Teaches durable memory: a per-project markdown file the agent can append to,
 folded back into every future system prompt for that directory. Design rule:

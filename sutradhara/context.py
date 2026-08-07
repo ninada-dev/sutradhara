@@ -1,4 +1,4 @@
-"""Day 3 of sutradhara: context.py.
+"""sutradhara: context.py.
 
 Teaches context compaction: past budget, summarize the old transcript and
 keep the recent tail verbatim. The summary is just another user message —

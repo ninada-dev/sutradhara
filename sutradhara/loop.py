@@ -1,4 +1,4 @@
-"""Day 1 of sutradhara: loop.py.
+"""sutradhara: loop.py.
 
 Teaches the agent loop itself: call the model, run any tool calls it asked
 for, feed results back, repeat. Design rule: a tool raising an exception is
@@ -14,8 +14,8 @@ def run_loop(model, system, messages, tools, on_event, before_tool,
     tools maps name -> Tool (.spec, .run(**kwargs)). before_tool(call) returns
     None to allow a call or a reason string to block it. before_turn, when
     given, is called with the message list before each model call and its
-    return value replaces the list in place (unused today; day 3 plugs
-    context compaction in here).
+    return value replaces the list in place — context.compact() plugs in
+    here to keep long conversations under a token budget.
     """
     from . import provider
 

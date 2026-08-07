@@ -1,9 +1,9 @@
-"""Day 2 of sutradhara: day2_build.py.
+"""sutradhara: build.py.
 
-Demo of the full day-2 stack: core_tools() giving the model a sandboxed
-scratch directory, and security.Policy sitting in loop.py's before_tool
-socket. Run with a task on the command line, e.g.:
-    python3 demos/day2_build.py "Create fib.py with an iterative fib(n)..."
+Demo of core_tools() giving the model a sandboxed scratch directory, and
+security.Policy sitting in loop.py's before_tool socket. Run with a task on
+the command line, e.g.:
+    python3 demos/build.py "Create fib.py with an iterative fib(n)..."
 """
 
 import sys
@@ -37,7 +37,7 @@ def on_event(kind, payload):
 
 def main():
     task = sys.argv[1] if len(sys.argv) > 1 else "List the files here."
-    workdir = tempfile.mkdtemp(prefix="sutradhara_day2_")
+    workdir = tempfile.mkdtemp(prefix="sutradhara_build_")
     print(f"scratch dir: {workdir}")
     print(f"user: {task}")
 

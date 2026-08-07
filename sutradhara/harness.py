@@ -1,4 +1,4 @@
-"""Day 4 of sutradhara: harness.py.
+"""sutradhara: harness.py.
 
 Teaches composition: Harness wires provider, loop, tools, security, context,
 memory, skills, sessions, and sub-agents into the one resumable object a CLI
