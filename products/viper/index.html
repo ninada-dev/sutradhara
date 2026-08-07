@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #222; color: white; font-family: sans-serif; }
+        canvas { border: 2px solid #fff; background: #000; }
+        .controls { margin-top: 10px; }
+        button { padding: 10px 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Score: <span id="score">0</span> | High Score: <span id="highScore">0</span></h1>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div class="controls">
+        <button id="pauseBtn">Pause</button>
+        <button id="restartBtn">Restart</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const highScoreEl = document.getElementById('highScore');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const restartBtn = document.getElementById('restartBtn');
+
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        let snake = [{x: 10, y: 10}];
+        let food = {x: 15, y: 15};
+        let dx = 0, dy = 0;
+        let score = 0;
+        let highScore = localStorage.getItem('snakeHighScore') || 0;
+        let speed = 150; // ms per frame
+        let lastTime = 0;
+        let isPaused = false;
+        let gameOver = false;
+
+        highScoreEl.innerText = highScore;
+
+        function resetGame() {
+            snake = [{x: 10, y: 10}];
+            dx = 0; dy = 0;
+            score = 0;
+            speed = 150;
+            scoreEl.innerText = score;
+            gameOver = false;
+            isPaused = false;
+            pauseBtn.innerText = "Pause";
+        }
+
+        function spawnFood() {
+            food = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp' && dy === 0) { dx = 0; dy = -1; }
+            if (e.key === 'ArrowDown' && dy === 0) { dx = 0; dy = 1; }
+            if (e.key === 'ArrowLeft' && dx === 0) { dx = -1; dy = 0; }
+            if (e.key === 'ArrowRight' && dx === 0) { dx = 1; dy = 0; }
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            pauseBtn.innerText = isPaused ? "Resume" : "Pause";
+        });
+
+        restartBtn.addEventListener('click', resetGame);
+
+        function update(time) {
+            if (!isPaused && !gameOver && time - lastTime > speed) {
+                lastTime = time;
+
+                const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+                // Wall collision
+                if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount || 
+                    snake.some(s => s.x === head.x && s.y === head.y)) {
+                    gameOver = true;
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('snakeHighScore', highScore);
+                        highScoreEl.innerText = highScore;
+                    }
+                    return;
+                }
+
+                snake.unshift(head);
+
+                if (head.x === food.x && head.y === food.y) {
+                    score++;
+                    scoreEl.innerText = score;
+                    if (score % 5 === 0) speed = Math.max(50, speed - 20);
+                    spawnFood();
+                } else {
+                    snake.pop();
+                }
+            }
+
+            // Draw
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'lime';
+            snake.forEach(s => ctx.fillRect(s.x * gridSize, s.y * gridSize, gridSize - 2, gridSize - 2));
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+
+            requestAnimationFrame(update);
+        }
+
+        requestAnimationFrame(update);
+    </script>
+</body>
+</html>

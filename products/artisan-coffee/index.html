@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artisan Coffee | Goa's Finest Specialty Roasts</title>
+    <style>
+        :root {
+            --bg: #fdfbf7;
+            --text: #2d2a26;
+            --accent: #d4a373;
+            --card-bg: #ffffff;
+            --nav-bg: rgba(253, 251, 247, 0.95);
+            --font-main: 'Georgia', serif;
+            --spacing-md: 2rem;
+            --transition: all 0.3s ease;
+        }
+        [data-theme="dark"] {
+            --bg: #1a1a1a;
+            --text: #e0e0e0;
+            --accent: #b8860b;
+            --card-bg: #2d2d2d;
+            --nav-bg: rgba(26, 26, 26, 0.95);
+        }
+        * { box-sizing: border-box; }
+        body { font-family: var(--font-main); background: var(--bg); color: var(--text); margin: 0; transition: var(--transition); line-height: 1.6; }
+        button:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .accordion-header:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .toggle:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .tabs button:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+        #theme-toggle:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+        #price-toggle:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+        nav { position: sticky; top: 0; background: var(--nav-bg); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; z-index: 100; border-bottom: 1px solid var(--accent); }
+        .hero { padding: 4rem 2rem; text-align: center; }
+        .hero svg { width: 100px; height: 100px; margin: 1rem; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 1rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 2rem; }
+        .card { background: var(--card-bg); padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .pricing { padding: 4rem 2rem; text-align: center; }
+        .toggle { cursor: pointer; padding: 0.5rem 1rem; background: var(--accent); color: white; border: none; border-radius: 4px; }
+        .tab-content { display: none; padding: 2rem; border: 1px solid var(--accent); }
+        .tab-content.active { display: block; }
+        .accordion-item { border-bottom: 1px solid var(--accent); }
+        .accordion-header { cursor: pointer; padding: 1rem; font-weight: bold; display: flex; justify-content: space-between; }
+        .accordion-content { display: none; padding: 1rem; }
+        @media (max-width: 480px) { .hero { padding: 2rem 1rem; } .grid { grid-template-columns: 1fr; } }
+        @media (min-width: 481px) and (max-width: 768px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1280px) { .container { max-width: 1200px; } .grid { grid-template-columns: repeat(3, 1fr); } }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>Artisan Coffee</h1>
+        <button id="theme-toggle">Toggle Dark Mode</button>
+    </nav>
+    <section class="hero">
+        <svg viewBox="0 0 100 100"><path d="M22 18c-2 2-2 60 0 62s60 2 62 0-2-60 0-62-60-2-62 0z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M35 35c-1 1-1 30 0 31s30 1 31 0-1-30 0-31-30-1-31 0z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <svg viewBox="0 0 100 100"><path d="M10 50h80M50 10v80" stroke="currentColor" stroke-width="2"/></svg>
+        <svg viewBox="0 0 100 100"><path d="M20 80L50 20L80 80Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        <h2>Hand-Roasted in Goa</h2>
+        <p>Experience the soul of Goan coffee culture. We bring the finest beans from the Western Ghats straight to your cup. Artisan Coffee is dedicated to the craft of roasting, ensuring that every batch we produce reflects the unique terroir of our region. Our journey began with a simple love for coffee, and it has grown into a mission to share the best of Indian specialty coffee with the world. We believe that coffee is more than just a morning ritual; it is a connection to the land, the farmers, and the rich history of coffee cultivation in India. Our roastery, nestled in the vibrant heart of Goa, is a sanctuary for coffee lovers seeking an authentic and elevated experience. From the high-altitude estates of Coorg to the lush plantations of Wayanad, we meticulously select our beans to bring you a diverse and exquisite range of flavors. Every roast is a testament to our commitment to quality, sustainability, and the artisanal spirit that defines everything we do. Join us on this flavorful journey as we explore the depths of specialty coffee, one cup at a time. We invite you to discover the nuances of our roasts, learn about our sustainable practices, and become part of our growing community of coffee enthusiasts. Whether you are a seasoned connoisseur or just beginning your specialty coffee adventure, Artisan Coffee has something special waiting for you. Our passion is our promise, and our coffee is our legacy.</p>
+    </section>
+    <section id="about" class="container">
+        <h2>Our Story</h2>
+        <p>Artisan Coffee began in a small shed in Anjuna, driven by a passion for specialty beans and a desire to showcase the incredible potential of Indian coffee. We work directly with farmers in the Western Ghats to ensure every bean is ethically sourced and perfectly roasted. Our story is one of resilience, creativity, and an unwavering commitment to excellence. When we started, we faced many challenges, but our belief in the quality of Indian coffee kept us going. Today, we are proud to be a part of the vibrant Goan community, sharing our love for coffee with locals and travelers alike. We believe that transparency is key to a better coffee industry, which is why we share the stories of our farmers and the details of our roasting process. From the moment the green beans arrive at our roastery to the final cup, every step is carefully monitored to ensure the highest standards. We are not just roasting coffee; we are crafting experiences that celebrate the rich heritage and diverse flavors of India. Our team of dedicated roasters and baristas is passionate about what they do, constantly experimenting and refining our techniques to bring you the best possible coffee. We invite you to visit our roastery, meet our team, and witness the magic of specialty coffee firsthand. Your support means the world to us and helps us continue our mission of promoting sustainable and ethical coffee practices. Thank you for being a part of our journey.</p>
+    </section>
+    <section id="origins" class="grid">
+        <div class="card"><h3>Coorg Estate</h3><p>Notes: Chocolate, Nutty</p><p>Price: ₹600</p></div>
+        <div class="card"><h3>Chikmagalur</h3><p>Notes: Citrus, Honey</p><p>Price: ₹650</p></div>
+        <div class="card"><h3>Wayanad</h3><p>Notes: Spice, Earthy</p><p>Price: ₹550</p></div>
+        <div class="card"><h3>Nilgiri</h3><p>Notes: Berry, Floral</p><p>Price: ₹700</p></div>
+        <div class="card"><h3>Shevaroy</h3><p>Notes: Caramel, Sweet</p><p>Price: ₹620</p></div>
+        <div class="card"><h3>Araku</h3><p>Notes: Winey, Fruity</p><p>Price: ₹800</p></div>
+    </section>
+    <section class="pricing">
+        <button class="toggle" id="price-toggle">Monthly / Annual</button>
+        <div id="pricing-table" style="display:flex; justify-content:center; gap:2rem; padding:2rem;">
+            <div class="card"><h3>Basic</h3><p class="price" data-m="500" data-a="5000">₹500</p></div>
+            <div class="card"><h3>Pro</h3><p class="price" data-m="1000" data-a="10000">₹1000</p></div>
+            <div class="card"><h3>Expert</h3><p class="price" data-m="2000" data-a="20000">₹2000</p></div>
+        </div>
+    </section>
+    <section id="brew-guide" class="container">
+        <h2>Brew Guides</h2>
+        <p>Mastering the art of brewing is a rewarding journey. Whether you prefer the clarity of a pour-over, the richness of a French press, or the intensity of an espresso, our guides will help you get the most out of your beans. Each method requires a different approach, from grind size to water temperature, and we are here to guide you through every step. We believe that everyone can brew a great cup of coffee at home with the right knowledge and tools. That's why we've put together these comprehensive guides, designed to empower you to experiment and find your perfect brew. Explore our techniques, learn the science behind each method, and elevate your daily coffee ritual. We are constantly updating our guides with new tips and tricks, so be sure to check back often. If you have any questions or need personalized advice, don't hesitate to reach out to our team of experts. We are always happy to help you on your coffee journey. Remember, the best cup of coffee is the one you enjoy the most, so don't be afraid to experiment and find what works for you. Happy brewing!</p>
+        <div class="tabs">
+            <button onclick="showTab('pour')">Pour Over</button>
+            <button onclick="showTab('french')">French Press</button>
+            <button onclick="showTab('espresso')">Espresso</button>
+        </div>
+        <div id="pour" class="tab-content active"><p>Pour over is a delicate method that highlights the subtle notes of our single-origin beans. Use a medium-fine grind and hot water (around 92°C). Pour slowly in circular motions to ensure even extraction. The result is a clean, bright cup with complex flavors.</p></div>
+        <div id="french" class="tab-content"><p>French press is full-bodied and robust, perfect for those who love a rich, textured cup. Use a coarse grind and steep for 4 minutes. Press gently and serve immediately. This method preserves the natural oils of the coffee, resulting in a deep, flavorful experience.</p></div>
+        <div id="espresso" class="tab-content"><p>Espresso is concentrated and intense, the foundation of many classic coffee drinks. Use a fine grind and high pressure to extract the essence of the coffee. The result is a bold, syrupy shot with a beautiful crema. Perfect for a quick pick-me-up or as a base for lattes and cappuccinos.</p></div>
+    </section>
+    <section id="faq" class="container">
+        <h2>FAQ</h2>
+        <p>Got questions? We've got answers. Here are some of the most common questions we receive from our community. If you don't find what you're looking for, feel free to contact us directly. We are always here to help. We believe that clear communication is essential to building strong relationships with our customers, and we are committed to providing you with all the information you need to make informed choices. Whether it's about our sourcing, our roasting, or our shipping, we are happy to share everything we know. Our FAQ section is updated regularly based on the feedback we receive, so it's a great resource for staying informed. We also encourage you to follow us on social media for the latest updates, behind-the-scenes content, and more. Thank you for your interest in Artisan Coffee, and we look forward to serving you.</p>
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">What is your roasting process? <span>+</span></div>
+            <div class="accordion-content">We roast in small batches using traditional drum roasters, ensuring optimal flavor development and consistency. Every roast is carefully monitored by our head roaster to bring out the unique characteristics of each origin.</div>
+        </div>
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">Do you ship across India? <span>+</span></div>
+            <div class="accordion-content">Yes, we ship to all major cities in India via reliable courier partners. We take great care in packaging our coffee to ensure it reaches you fresh and in perfect condition.</div>
+        </div>
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion(this)">Can I subscribe to your coffee? <span>+</span></div>
+            <div class="accordion-content">Yes, we offer flexible subscription plans that allow you to receive your favorite coffee regularly. You can choose your preferred frequency and roast profile, and we'll take care of the rest.</div>
+        </div>
+    </section>
+    <section id="contact" class="container">
+        <h2>Contact Us</h2>
+        <p>We love hearing from our community. Whether you have a question about our coffee, want to learn more about our roasting process, or just want to say hello, we are here to listen. You can reach us via email at hello@artisancoffee.in or visit our roastery in the heart of Goa. We are open from Monday to Saturday, 9 AM to 6 PM. We also host workshops and tasting sessions, so be sure to check our website for upcoming events. We believe that coffee is a shared experience, and we are grateful for the opportunity to connect with you. Your feedback is invaluable to us and helps us improve every day. Thank you for being a part of the Artisan Coffee family, and we look forward to hearing from you soon. Let's make every cup count together.</p>
+    </section>
+    <footer class="container">
+        <p>&copy; 2023 Artisan Coffee. All rights reserved. Committed to the craft of specialty coffee in Goa, India.</p>
+    </footer>
+    <script>
+        // Theme
+        const toggle = document.getElementById('theme-toggle');
+        const theme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        toggle.addEventListener('click', () => {
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+        // Tabs
+        function showTab(id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        // Accordion
+        function toggleAccordion(el) {
+            el.nextElementSibling.style.display = el.nextElementSibling.style.display === 'block' ? 'none' : 'block';
+        }
+        // Pricing Toggle
+        const priceToggle = document.getElementById('price-toggle');
+        let isAnnual = false;
+        priceToggle.addEventListener('click', () => {
+            isAnnual = !isAnnual;
+            document.querySelectorAll('.price').forEach(p => {
+                p.innerText = isAnnual ? '₹' + p.dataset.a : '₹' + p.dataset.m;
+            });
+        });
+    </script>
+</body>
+</html>
