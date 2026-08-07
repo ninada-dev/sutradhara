@@ -1,9 +1,11 @@
-"""Day 4 of sutradhara: __main__.py.
+"""Day 5 of sutradhara: __main__.py.
 
-Lets `python3 -m sutradhara` run the CLI directly from the repo root.
+Lets `python3 -m sutradhara` run the real CLI directly from the repo root.
 """
+
+import sys
 
 from .cli import main
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
