@@ -34,8 +34,11 @@ def _print_event(kind, payload):
 
 
 def _approve(call, reason):
-    """Ask the user to approve a gated tool call; anything but 'y' refuses."""
-    return input(f"{reason} [y/N] ").strip().lower() == "y"
+    """Ask the user to approve a gated tool call; anything but 'y', including EOF, refuses."""
+    try:
+        return input(f"{reason} [y/N] ").strip().lower() == "y"
+    except EOFError:
+        return False
 
 
 def _parse_args(argv):
