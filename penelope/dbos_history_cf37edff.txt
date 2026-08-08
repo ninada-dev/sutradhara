@@ -1,0 +1,102 @@
+--- round 0 (1780 chars) ---
+Incident Handoff: checkout-api degraded performance, 2026-03-03
+
+On 2026-03-03, the checkout-api service (instance i-0af29cd81b3) began
+rejecting connections under normal load. On-call was Priya Nair, who was
+paged at 02:14 IST and escalated to Marcus Chen, the engineer who had
+deployed the previous release.
+
+Root cause: the payments-gateway service was upgraded to v2.15.0 the day
+before. The new connection-pooling logic in v2.15.0 does not release
+connections back to the pool under high concurrency, so the pool exhausts
+itself once utilization crosses roughly 92%. Because payments-gateway
+listens on port 8443 and checkout-api depends on it synchronously for every
+checkout request, the exhausted pool cascaded into checkout-api rejecting
+requests too.
+
+Marcus rolled payments-gateway back to v2.14.3, the last known-good version,
+which resolved the incident. The rollback was applied by hand; the automated
+deploy pipeline was not used, because the pipeline currently has no gate
+that would have caught this regression.
+
+Estimated revenue impact of the 47-minute outage: $42,000, based on average
+checkout throughput during the affected window.
+
+Do NOT re-enable the auto-scaling policy on payments-gateway until the
+connection-pool leak in v2.15.0 is actually fixed and verified under load --
+auto-scaling would only mask the leak by adding more leaking instances, and
+was explicitly disabled for this reason after the incident.
+
+The pool configuration lives at /etc/payments-gateway/pool-config.yaml, and
+whoever picks up the fix for v2.15.0 should start by comparing that file's
+max_connections setting against what the new pooling logic in v2.15.0
+actually respects, since there is reason to believe it silently ignores the
+configured limit rather than enforcing it.
+
+
+--- round 1 (1169 chars) ---
+**Incident Summary: checkout-api Performance Degradation (2026-03-03)**
+
+*   **Incident:** `checkout-api` (instance `i-0af29cd81b3`) experienced a 47-minute outage, resulting in $42,000 estimated revenue loss.
+*   **Root Cause:** `payments-gateway` v2.15.0 introduced a connection-pooling regression. Under high concurrency (>92% utilization), the service fails to release connections, exhausting the pool and causing synchronous request failures in `checkout-api` (which relies on `payments-gateway` via port 8443).
+*   **Resolution:** Marcus Chen performed a manual rollback of `payments-gateway` to v2.14.3.
+*   **Action Items:**
+    *   **Fix Verification:** Investigate `payments-gateway` v2.15.0 connection-pooling logic. Compare `max_connections` in `/etc/payments-gateway/pool-config.yaml` against actual enforcement, as v2.15.0 likely ignores this limit.
+    *   **Auto-scaling:** Keep `payments-gateway` auto-scaling disabled until the leak is patched and verified; auto-scaling currently masks the issue by spawning more leaking instances.
+    *   **Pipeline Improvement:** Address the lack of automated deployment gates capable of detecting this regression.
+
+--- round 2 (942 chars) ---
+**Incident Summary: `checkout-api` Outage (2026-03-03)**
+
+*   **Impact:** 47-minute outage of `checkout-api` (instance `i-0af29cd81b3`) causing $42,000 in revenue loss.
+*   **Root Cause:** A connection-pooling regression in `payments-gateway` v2.15.0. At >92% utilization, the service fails to release connections, exhausting the pool and causing synchronous request failures for `checkout-api` (communicating via port 8443).
+*   **Resolution:** Marcus Chen rolled back `payments-gateway` to v2.14.3.
+*   **Action Items:**
+    *   **Root Cause Analysis:** Audit `payments-gateway` v2.15.0 pooling logic; verify if `/etc/payments-gateway/pool-config.yaml` `max_connections` settings are being ignored.
+    *   **Operational Control:** Maintain disabled auto-scaling for `payments-gateway` to prevent masking the leak via instance proliferation.
+    *   **CI/CD:** Implement automated deployment gates to detect connection-handling regressions.
+
+--- round 3 (902 chars) ---
+**Incident Summary: `checkout-api` Outage (2026-03-03)**
+
+*   **Impact:** 47-minute `checkout-api` outage (instance `i-0af29cd81b3`) resulting in $42,000 revenue loss.
+*   **Root Cause:** `payments-gateway` v2.15.0 introduced a connection-pooling regression. Once utilization exceeds 92%, the service fails to release connections, exhausting the pool and causing synchronous request failures on port 8443.
+*   **Resolution:** Marcus Chen reverted `payments-gateway` to v2.14.3.
+*   **Action Items:**
+    *   **Audit:** Investigate `payments-gateway` v2.15.0 pooling logic and determine if `/etc/payments-gateway/pool-config.yaml` `max_connections` settings are being bypassed.
+    *   **Ops:** Disable `payments-gateway` auto-scaling to prevent instance proliferation from masking the leak.
+    *   **CI/CD:** Deploy automated gates to identify connection-handling regressions during the build process.
+
+--- round 4 (819 chars) ---
+**Incident Summary: `checkout-api` Outage (2026-03-03)**
+
+*   **Impact:** 47-minute outage on `checkout-api` (instance `i-0af29cd81b3`), resulting in $42,000 revenue loss.
+*   **Root Cause:** A connection-pooling regression in `payments-gateway` v2.15.0 caused pool exhaustion and synchronous request failures on port 8443 when utilization exceeded 92%.
+*   **Resolution:** Marcus Chen reverted `payments-gateway` to v2.14.3.
+*   **Action Items:**
+    *   **Audit:** Review v2.15.0 pooling logic and verify if `/etc/payments-gateway/pool-config.yaml` `max_connections` settings are being bypassed.
+    *   **Ops:** Disable `payments-gateway` auto-scaling to prevent instance proliferation from obscuring leak metrics.
+    *   **CI/CD:** Implement automated gates to detect connection-handling regressions during builds.
+
+--- round 5 (839 chars) ---
+**Incident Summary: `checkout-api` Outage (2026-03-03)**
+
+*   **Impact:** A 47-minute outage on `checkout-api` (instance `i-0af29cd81b3`) resulted in $42,000 in lost revenue.
+*   **Root Cause:** `payments-gateway` v2.15.0 introduced a connection-pooling regression. This caused pool exhaustion and synchronous request failures on port 8443 once utilization surpassed 92%.
+*   **Resolution:** Marcus Chen reverted `payments-gateway` to v2.14.3.
+*   **Action Items:**
+    *   **Audit:** Investigate v2.15.0 pooling logic and determine if `/etc/payments-gateway/pool-config.yaml` `max_connections` settings are being bypassed.
+    *   **Ops:** Disable `payments-gateway` auto-scaling to prevent instance proliferation from masking leak metrics.
+    *   **CI/CD:** Deploy automated build gates to detect future connection-handling regressions.
+
+--- round 6 (789 chars) ---
+**Incident Summary: `checkout-api` Outage (2026-03-03)**
+
+*   **Impact:** 47-minute downtime on `checkout-api` (instance `i-0af29cd81b3`) causing $42,000 in revenue loss.
+*   **Root Cause:** `payments-gateway` v2.15.0 introduced a connection-pooling regression, triggering pool exhaustion and synchronous failures on port 8443 when utilization exceeded 92%.
+*   **Resolution:** Marcus Chen rolled back `payments-gateway` to v2.14.3.
+*   **Action Items:**
+    *   **Audit:** Analyze v2.15.0 pooling logic to check for bypasses of `max_connections` settings in `/etc/payments-gateway/pool-config.yaml`.
+    *   **Ops:** Disable `payments-gateway` auto-scaling to ensure leak metrics remain visible.
+    *   **CI/CD:** Implement automated build gates to catch connection-handling regressions.
+
