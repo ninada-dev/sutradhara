@@ -1,0 +1,254 @@
+--- round 0 (19539 chars) ---
+Incident 1:
+On 2026-07-09, the payments-gateway service (instance i-90825085) began returning elevated 5xx rates. On-call was Carlos Kimura, paged at 03:58 PST, who escalated to Fatima Larsen, the engineer who had shipped the previous release. The regression traced back to a deadlock under high concurrency, introduced in v4.12.6; utilization crossed about 88% before the service degraded. payments-gateway runs on port 8001 and is a synchronous dependency for several other services. The fix was a manual rollback of payments-gateway to v4.17.4, performed by Fatima Larsen directly rather than through the deploy pipeline -- there is currently no automated gate in that pipeline that would have flagged the regression beforehand. The outage is estimated to have cost approximately $79,300 in lost revenue. Auto-scaling on payments-gateway must stay off until this is properly fixed and load-tested -- turning it back on would just paper over the problem with more bad instances, which is exactly why it was disabled. The relevant configuration lives at /etc/payments-gateway/config.yaml, and whoever picks up the permanent fix should check that file's settings against what v4.12.6 actually respects, since there's reason to believe it silently ignores some of them.
+
+Incident 2:
+2026-02-05: inventory-sync (instance i-b750723c) started silently dropping writes. Ines Novak was on call and got paged at 23:53 PST; the incident was escalated to Bjorn Okafor shortly after. The regression traced back to a thundering-herd on cold start, introduced in v2.9.8; utilization crossed about 94% before the service degraded. inventory-sync runs on port 7000 and is a synchronous dependency for several other services. Bjorn Okafor rolled inventory-sync back to v4.18.7, the last known-good version, which resolved the incident. The rollback was applied by hand; the deploy pipeline was not used, since it currently has no gate that would have caught this regression. Revenue impact was estimated at $78,800 for the duration of the incident. inventory-sync's auto-scaling policy should remain disabled until the fix is verified under load; re-enabling it would only hide the underlying issue behind additional instances, which is why it was turned off in the first place. The relevant configuration lives at /etc/inventory-sync/config.yaml, and whoever picks up the permanent fix should check that file's settings against what v2.9.8 actually respects, since there's reason to believe it silently ignores some of them.
+
+Incident 3:
+2026-03-14: auth-broker (instance i-5d00f845) started rejecting connections under normal load. Tomas Petrov was on call and got paged at 15:50 PST; the incident was escalated to Ines Lindgren shortly after. Root cause was a missing index causing full table scans in version v4.13.9, which pushed pool/resource utilization past roughly 92% before things cascaded. auth-broker listens on port 9200, and downstream callers depend on it synchronously. The fix was a manual rollback of auth-broker to v2.3.6, performed by Ines Lindgren directly rather than through the deploy pipeline -- there is currently no automated gate in that pipeline that would have flagged the regression beforehand. Estimated revenue impact of the outage was $48,700, based on throughput during the affected window. Do NOT re-enable auto-scaling on auth-broker until the underlying issue is fixed and verified under load -- auto-scaling would only mask the problem by adding more affected instances, and was explicitly disabled for this reason. The relevant configuration lives at /etc/auth-broker/config.yaml, and whoever picks up the permanent fix should check that file's settings against what v4.13.9 actually respects, since there's reason to believe it silently ignores some of them.
+
+Incident 4:
+A search-index incident began on 2026-02-12 (instance i-702a994a): silently dropping writes. Elena Kaur received the page at 20:02 PST and brought in Fatima Rossi to help diagnose it. Investigation found a memory leak in the cache layer as the root cause, present since v4.10.2 shipped. The failure threshold was around 97% utilization. search-index is reachable on port 9090. Fatima Rossi manually reverted search-index to v2.13.7 outside the normal deploy pipeline, which resolved things; the pipeline still lacks any gate that would catch this class of regression automatically. Estimated revenue impact of the outage was $89,300, based on throughput during the affected window. Do NOT re-enable auto-scaling on search-index until the underlying issue is fixed and verified under load -- auto-scaling would only mask the problem by adding more affected instances, and was explicitly disabled for this reason. Configuration for this service is at /etc/search-index/config.yaml; the permanent fix should start by comparing that file against what v4.10.2 actually enforces, which may not match what's configured.
+
+Incident 5:
+2026-01-15: recommendation-engine (instance i-72a5712a) started returning elevated 5xx rates. Priya Kaur was on call and got paged at 07:12 CET; the incident was escalated to Amir Bergman shortly after. Root cause was an unbounded retry loop in version v4.4.9, which pushed pool/resource utilization past roughly 97% before things cascaded. recommendation-engine listens on port 9090, and downstream callers depend on it synchronously. Amir Bergman rolled recommendation-engine back to v2.4.7, the last known-good version, which resolved the incident. The rollback was applied by hand; the deploy pipeline was not used, since it currently has no gate that would have caught this regression. Revenue impact was estimated at $59,200 for the duration of the incident. Do NOT re-enable auto-scaling on recommendation-engine until the underlying issue is fixed and verified under load -- auto-scaling would only mask the problem by adding more affected instances, and was explicitly disabled for this reason. The relevant configuration lives at /etc/recommendation-engine/config.yaml, and whoever picks up the permanent fix should check that file's settings against what v4.4.9 actually respects, since there's reason to believe it silently ignores some of them.
+
+Incident 6:
+On 2026-01-06, the notification-hub service (instance i-31014327) began rejecting connections under normal load. On-call was Felix Lindgren, paged at 03:28 CET, who escalated to Aisha Volkov, the engineer who had shipped the previous release. Root cause was disk space exhaustion on the write path in version v2.19.3, which pushed pool/resource utilization past roughly 88% before things cascaded. notification-hub listens on port 6379, and downstream callers depend on it synchronously. Aisha Volkov rolled notification-hub back to v4.4.5, the last known-good version, which resolved the incident. The rollback was applied by hand; the deploy pipeline was not used, since it currently has no gate that would have caught this regression. The outage is estimated to have cost approximately $54,700 in lost revenue. notification-hub's auto-scaling policy should remain disabled until the fix is verified under load; re-enabling it would only hide the underlying issue behind additional instances, which is why it was turned off in the first place. The relevant configuration lives at /etc/notification-hub/config.yaml, and whoever picks up the permanent fix should check that file's settings against what v2.19.3 actually respects, since there's reason to believe it silently ignores some of them.
+
+Incident 7:
+2026-03-21: billing-service (instance i-12c05be3) started rejecting connections under normal load. Aisha Novak was on call and got paged at 16:24 UTC; the incident was escalated to Tomas Okafor shortly after. Investigation found a deadlock under high concurrency as the root cause, present since v2.16.6 shipped. The failure threshold was around 88% utilization. billing-service is reachable on port 8001. Tomas Okafor manually reverted billing-service to v4.20.2 outside the normal deploy pipeline, which resolved things; the pipeline still lacks any gate that would catch this class of regression automatically. Revenue impact was estimated at $39,200 for the duration of the incident. Auto-scaling on billing-service must stay off until this is properly fixed and load-tested -- turning it back on would just paper over the problem with more bad instances, which is exactly why it was disabled. Configuration for this service is at /etc/billing-service/config.yaml; the permanent fix should start by comparing that file against what v2.16.6 actually enforces, which may not match what's configured.
+
+Incident 8:
+2026-06-04: session-store (instance i-f73cc5c3) started timing out on a large fraction of requests. Elin Chen was on call and got paged at 04:03 PST; the incident was escalated to Felix Adeyemi shortly after. Investigation found a deadlock under high concurrency as the root cause, present since v4.4.7 shipped. The failure threshold was around 90% utilization. session-store is reachable on port 9090. Felix Adeyemi rolled session-store back to v2.10.7, the last known-good version, which resolved the incident. The rollback was applied by hand; the deploy pipeline was not used, since it currently has no gate that would have caught this regression. Estimated revenue impact of the outage was $71,800, based on throughput during the affected window. Auto-scaling on session-store must stay off until this is properly fixed and load-tested -- turning it back on would just paper over the problem with more bad instances, which is exactly why it was disabled. Configuration for this service is at /etc/session-store/config.yaml; the permanent fix should start by comparing that file against what v4.4.7 actually enforces, which may not match what's configured.
+
+Incident 9:
+A media-transcoder incident began on 2026-10-24 (instance i-7edb93d8): silently dropping writes. Chidi Haddad received the page at 03:56 IST and brought in Priyanka Bergman to help diagnose it. Root cause was disk space exhaustion on the write path in version v3.4.4, which pushed pool/resource utilization past roughly 85% before things cascaded. media-transcoder listens on port 9443, and downstream callers depend on it synchronously. The fix was a manual rollback of media-transcoder to v4.5.3, performed by Priyanka Bergman directly rather than through the deploy pipeline -- there is currently no automated gate in that pipeline that would have flagged the regression beforehand. Revenue impact was estimated at $21,800 for the duration of the incident. media-transcoder's auto-scaling policy should remain disabled until the fix is verified under load; re-enabling it would only hide the underlying issue behind additional instances, which is why it was turned off in the first place. Configuration for this service is at /etc/media-transcoder/config.yaml; the permanent fix should start by comparing that file against what v3.4.4 actually enforces, which may not match what's configured.
+
+Incident 10:
+2026-06-09: shipping-calc (instance i-54e022f0) started rejecting connections under normal load. Mira Volkov was on call and got paged at 10:18 UTC; the incident was escalated to Owen Novak shortly after. Investigation found a missing index causing full table scans as the root cause, present since v3.0.0 shipped. The failure threshold was around 88% utilization. shipping-calc is reachable on port 8001. The fix was a manual rollback of shipping-calc to v3.4.4, performed by Owen Novak directly rather than through the deploy pipeline -- there is currently no automated gate in that pipeline that would have flagged the regression beforehand. Estimated revenue impact of the outage was $73,200, based on throughput during the affected window. Auto-scaling on shipping-calc must stay off until this is properly fixed and load-tested -- turning it back on would just paper over the problem with more bad instances, which is exactly why it was disabled. The relevant configuration lives at /etc/shipping-calc/config.yaml, and whoever picks up the permanent fix should check that file's settings against what v3.0.0 actually respects, since there's reason to believe it silently ignores some of them.
+
+Incident 11:
+2026-09-24: fraud-scorer (instance i-5c26c555) started rejecting connections under normal load. Soren Kaur was on call and got paged at 21:57 UTC; the incident was escalated to Ines Nair shortly after. Root cause was disk space exhaustion on the write path in version v2.3.3, which pushed pool/resource utilization past roughly 88% before things cascaded. fraud-scorer listens on port 9200, and downstream callers depend on it synchronously. The fix was a manual rollback of fraud-scorer to v2.2.6, performed by Ines Nair directly rather than through the deploy pipeline -- there is currently no automated gate in that pipeline that would have flagged the regression beforehand. The outage is estimated to have cost approximately $72,800 in lost revenue. Do NOT re-enable auto-scaling on fraud-scorer until the underlying issue is fixed and verified under load -- auto-scaling would only mask the problem by adding more affected instances, and was explicitly disabled for this reason. Configuration for this service is at /etc/fraud-scorer/config.yaml; the permanent fix should start by comparing that file against what v2.3.3 actually enforces, which may not match what's configured.
+
+Incident 12:
+A catalog-api incident began on 2026-04-01 (instance i-3c485525): timing out on a large fraction of requests. Leif Bergman received the page at 22:00 IST and brought in Dmitri Diallo to help diagnose it. Root cause was a thundering-herd on cold start in version v4.11.6, which pushed pool/resource utilization past roughly 94% before things cascaded. catalog-api listens on port 9200, and downstream callers depend on it synchronously. Dmitri Diallo rolled catalog-api back to v4.11.5, the last known-good version, which resolved the incident. The rollback was applied by hand; the deploy pipeline was not used, since it currently has no gate that would have caught this regression. Estimated revenue impact of the outage was $43,200, based on throughput during the affected window. Do NOT re-enable auto-scaling on catalog-api until the underlying issue is fixed and verified under load -- auto-scaling would only mask the problem by adding more affected instances, and was explicitly disabled for this reason. The relevant configuration lives at /etc/catalog-api/config.yaml, and whoever picks up the permanent fix should check that file's settings against what v4.11.6 actually respects, since there's reason to believe it silently ignores some of them.
+
+Incident 13:
+2026-02-14: cart-service (instance i-b6181762) started rejecting connections under normal load. Devon Okafor was on call and got paged at 23:55 IST; the incident was escalated to Ingrid Adeyemi shortly after. The regression traced back to connection-pool exhaustion, introduced in v4.3.1; utilization crossed about 88% before the service degraded. cart-service runs on port 8888 and is a synchronous dependency for several other services. The fix was a manual rollback of cart-service to v3.10.9, performed by Ingrid Adeyemi directly rather than through the deploy pipeline -- there is currently no automated gate in that pipeline that would have flagged the regression beforehand. The outage is estimated to have cost approximately $92,200 in lost revenue. Do NOT re-enable auto-scaling on cart-service until the underlying issue is fixed and verified under load -- auto-scaling would only mask the problem by adding more affected instances, and was explicitly disabled for this reason. The relevant configuration lives at /etc/cart-service/config.yaml, and whoever picks up the permanent fix should check that file's settings against what v4.3.1 actually respects, since there's reason to believe it silently ignores some of them.
+
+Incident 14:
+On 2026-07-12, the loyalty-engine service (instance i-ffc10ed3) began rejecting connections under normal load. On-call was Elin Novak, paged at 12:19 CET, who escalated to Mira Kimura, the engineer who had shipped the previous release. The regression traced back to a memory leak in the cache layer, introduced in v4.15.5; utilization crossed about 90% before the service degraded. loyalty-engine runs on port 5432 and is a synchronous dependency for several other services. Mira Kimura manually reverted loyalty-engine to v3.7.6 outside the normal deploy pipeline, which resolved things; the pipeline still lacks any gate that would catch this class of regression automatically. The outage is estimated to have cost approximately $94,600 in lost revenue. loyalty-engine's auto-scaling policy should remain disabled until the fix is verified under load; re-enabling it would only hide the underlying issue behind additional instances, which is why it was turned off in the first place. Configuration for this service is at /etc/loyalty-engine/config.yaml; the permanent fix should start by comparing that file against what v4.15.5 actually enforces, which may not match what's configured.
+
+Incident 15:
+2026-09-23: order-router (instance i-36221959) started rejecting connections under normal load. Marcus Volkov was on call and got paged at 22:26 IST; the incident was escalated to Elin Kimura shortly after. Root cause was a misconfigured circuit breaker staying permanently open in version v3.11.6, which pushed pool/resource utilization past roughly 94% before things cascaded. order-router listens on port 8888, and downstream callers depend on it synchronously. Elin Kimura manually reverted order-router to v4.14.9 outside the normal deploy pipeline, which resolved things; the pipeline still lacks any gate that would catch this class of regression automatically. Revenue impact was estimated at $16,000 for the duration of the incident. Auto-scaling on order-router must stay off until this is properly fixed and load-tested -- turning it back on would just paper over the problem with more bad instances, which is exactly why it was disabled. Configuration for this service is at /etc/order-router/config.yaml; the permanent fix should start by comparing that file against what v3.11.6 actually enforces, which may not match what's configured.
+
+Incident 16:
+A checkout-api incident began on 2026-03-23 (instance i-b118875e): rejecting connections under normal load. Elena Novak received the page at 09:14 CET and brought in Yuki Diallo to help diagnose it. Root cause was an unbounded retry loop in version v3.4.2, which pushed pool/resource utilization past roughly 85% before things cascaded. checkout-api listens on port 7000, and downstream callers depend on it synchronously. The fix was a manual rollback of checkout-api to v2.18.6, performed by Yuki Diallo directly rather than through the deploy pipeline -- there is currently no automated gate in that pipeline that would have flagged the regression beforehand. Estimated revenue impact of the outage was $71,200, based on throughput during the affected window. Do NOT re-enable auto-scaling on checkout-api until the underlying issue is fixed and verified under load -- auto-scaling would only mask the problem by adding more affected instances, and was explicitly disabled for this reason. The relevant configuration lives at /etc/checkout-api/config.yaml, and whoever picks up the permanent fix should check that file's settings against what v3.4.2 actually respects, since there's reason to believe it silently ignores some of them.
+
+--- round 1 (2723 chars) ---
+This summary covers 16 service incidents occurring between 2026-01-06 and 2026-10-24. All incidents involved synchronous dependencies, were resolved via manual rollbacks (bypassing the deploy pipeline), and resulted in significant revenue loss.
+
+### **Common Themes & Action Items**
+*   **Pipeline Deficiencies:** All incidents highlight the lack of automated gates in the deployment pipeline to catch regressions prior to production.
+*   **Auto-scaling:** Disabled across all affected services to prevent masking underlying issues with additional faulty instances. **Do not re-enable** until fixes are verified under load.
+*   **Configuration Drift:** In every case, the configuration file (located in `/etc/<service>/config.yaml`) may be ignored or partially enforced by the problematic version. Permanent fixes must audit these configuration settings against actual enforcement.
+
+### **Incident Summary Table**
+
+| Service | Date | Port | Root Cause | Version | Revenue Impact |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **notification-hub** | 2026-01-06 | 6379 | Disk exhaustion | v2.19.3 | $54,700 |
+| **recommendation-engine**| 2026-01-15 | 9090 | Unbounded retry loop | v4.4.9 | $59,200 |
+| **inventory-sync** | 2026-02-05 | 7000 | Thundering-herd | v2.9.8 | $78,800 |
+| **search-index** | 2026-02-12 | 9090 | Cache memory leak | v4.10.2 | $89,300 |
+| **cart-service** | 2026-02-14 | 8888 | Conn-pool exhaustion | v4.3.1 | $92,200 |
+| **auth-broker** | 2026-03-14 | 9200 | Missing index | v4.13.9 | $48,700 |
+| **billing-service** | 2026-03-21 | 8001 | Deadlock | v2.16.6 | $39,200 |
+| **checkout-api** | 2026-03-23 | 7000 | Unbounded retry loop | v3.4.2 | $71,200 |
+| **catalog-api** | 2026-04-01 | 9200 | Thundering-herd | v4.11.6 | $43,200 |
+| **session-store** | 2026-06-04 | 9090 | Deadlock | v4.4.7 | $71,800 |
+| **shipping-calc** | 2026-06-09 | 8001 | Missing index | v3.0.0 | $73,200 |
+| **payments-gateway** | 2026-07-09 | 8001 | Deadlock | v4.12.6 | $79,300 |
+| **loyalty-engine** | 2026-07-12 | 5432 | Cache memory leak | v4.15.5 | $94,600 |
+| **order-router** | 2026-09-23 | 8888 | Misconfigured circuit breaker | v3.11.6 | $16,000 |
+| **fraud-scorer** | 2026-09-24 | 9200 | Disk exhaustion | v2.3.3 | $72,800 |
+| **media-transcoder** | 2026-10-24 | 9443 | Disk exhaustion | v3.4.4 | $21,800 |
+
+### **Key Technical Notes**
+*   **Failure Thresholds:** Most services degraded between 85% and 97% resource/pool utilization.
+*   **Resolution:** All services were rolled back to the last known-good version manually.
+*   **Next Steps:** Engineers assigned to permanent fixes must prioritize validating configuration file enforcement and implementing automated regression testing in the deployment pipeline.
+
+--- round 2 (2330 chars) ---
+Between 2026-01-06 and 2026-10-24, 16 service incidents occurred due to synchronous dependency failures, resulting in significant revenue loss. All incidents were resolved via manual rollbacks, bypassing standard deployment pipelines.
+
+### **Common Failure Factors**
+*   **Pipeline:** Lack of automated regression gates.
+*   **Configuration:** Potential enforcement failures in `/etc/<service>/config.yaml`.
+*   **Resource Management:** Auto-scaling is disabled globally to prevent masking issues; do not re-enable until fixes are verified under load.
+*   **Thresholds:** Service degradation typically occurred at 85%–97% utilization.
+
+### **Incident Data**
+
+| Service | Date | Port | Root Cause | Version | Revenue |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| notification-hub | 2026-01-06 | 6379 | Disk exhaustion | v2.19.3 | $54,700 |
+| recommendation-engine| 2026-01-15 | 9090 | Unbounded retry | v4.4.9 | $59,200 |
+| inventory-sync | 2026-02-05 | 7000 | Thundering-herd | v2.9.8 | $78,800 |
+| search-index | 2026-02-12 | 9090 | Cache memory leak | v4.10.2 | $89,300 |
+| cart-service | 2026-02-14 | 8888 | Conn-pool exhaustion | v4.3.1 | $92,200 |
+| auth-broker | 2026-03-14 | 9200 | Missing index | v4.13.9 | $48,700 |
+| billing-service | 2026-03-21 | 8001 | Deadlock | v2.16.6 | $39,200 |
+| checkout-api | 2026-03-23 | 7000 | Unbounded retry | v3.4.2 | $71,200 |
+| catalog-api | 2026-04-01 | 9200 | Thundering-herd | v4.11.6 | $43,200 |
+| session-store | 2026-06-04 | 9090 | Deadlock | v4.4.7 | $71,800 |
+| shipping-calc | 2026-06-09 | 8001 | Missing index | v3.0.0 | $73,200 |
+| payments-gateway | 2026-07-09 | 8001 | Deadlock | v4.12.6 | $79,300 |
+| loyalty-engine | 2026-07-12 | 5432 | Cache memory leak | v4.15.5 | $94,600 |
+| order-router | 2026-09-23 | 8888 | Misconfigured breaker | v3.11.6 | $16,000 |
+| fraud-scorer | 2026-09-24 | 9200 | Disk exhaustion | v2.3.3 | $72,800 |
+| media-transcoder | 2026-10-24 | 9443 | Disk exhaustion | v3.4.4 | $21,800 |
+
+### **Required Action Items**
+1.  **Configuration Audit:** Verify actual enforcement of settings in `/etc/<service>/config.yaml` against defined parameters.
+2.  **Pipeline Remediation:** Implement automated regression testing to prevent faulty deployments.
+3.  **Validation:** Ensure all permanent fixes are tested under load before re-enabling auto-scaling.
+
+--- round 3 (1304 chars) ---
+Between 2026-01-06 and 2026-10-24, 16 synchronous dependency failures caused significant revenue loss, requiring manual rollbacks that bypassed standard pipelines. System degradation consistently triggered at 85%–97% utilization.
+
+### **Root Cause Summary**
+*   **Disk Exhaustion:** `notification-hub` (v2.19.3), `fraud-scorer` (v2.3.3), `media-transcoder` (v3.4.4).
+*   **Deadlocks:** `billing-service` (v2.16.6), `session-store` (v4.4.7), `payments-gateway` (v4.12.6).
+*   **Cache Memory Leaks:** `search-index` (v4.10.2), `loyalty-engine` (v4.15.5).
+*   **Unbounded Retries:** `recommendation-engine` (v4.4.9), `checkout-api` (v3.4.2).
+*   **Thundering-Herd:** `inventory-sync` (v2.9.8), `catalog-api` (v4.11.6).
+*   **Missing Indexes:** `auth-broker` (v4.13.9), `shipping-calc` (v3.0.0).
+*   **Other:** `cart-service` (v4.3.1, conn-pool exhaustion), `order-router` (v3.11.6, misconfigured breaker).
+
+### **System Constraints & Action Items**
+*   **Resource Management:** Global auto-scaling is disabled to prevent masking underlying issues; do not re-enable until fixes are validated under load.
+*   **Configuration Audit:** Validate enforcement of settings defined in `/etc/<service>/config.yaml`.
+*   **Pipeline Remediation:** Deploy automated regression gates to replace manual rollback workflows.
+
+--- round 4 (1227 chars) ---
+Between 2026-01-06 and 2026-10-24, 16 synchronous dependency failures caused revenue loss and forced manual, non-standard rollbacks. Degradation consistently occurred at 85%–97% utilization.
+
+### **Root Cause Analysis**
+*   **Disk Exhaustion:** `notification-hub` (v2.19.3), `fraud-scorer` (v2.3.3), `media-transcoder` (v3.4.4).
+*   **Deadlocks:** `billing-service` (v2.16.6), `session-store` (v4.4.7), `payments-gateway` (v4.12.6).
+*   **Cache Memory Leaks:** `search-index` (v4.10.2), `loyalty-engine` (v4.15.5).
+*   **Unbounded Retries:** `recommendation-engine` (v4.4.9), `checkout-api` (v3.4.2).
+*   **Thundering-Herd:** `inventory-sync` (v2.9.8), `catalog-api` (v4.11.6).
+*   **Missing Indexes:** `auth-broker` (v4.13.9), `shipping-calc` (v3.0.0).
+*   **Resource/Config:** `cart-service` (v4.3.1, connection pool exhaustion); `order-router` (v3.11.6, misconfigured circuit breaker).
+
+### **Action Items & Constraints**
+*   **Scaling:** Global auto-scaling remains disabled to prevent masking; re-enablement requires validation under load.
+*   **Configuration:** Audit and enforce settings in `/etc/<service>/config.yaml`.
+*   **Deployment:** Implement automated regression gates to eliminate reliance on manual rollbacks.
+
+--- round 5 (1120 chars) ---
+Between 2026-01-06 and 2026-10-24, 16 synchronous dependency failures occurred during 85%–97% utilization, necessitating manual rollbacks.
+
+**Root Causes by Service:**
+*   **Disk Exhaustion:** `notification-hub` (v2.19.3), `fraud-scorer` (v2.3.3), `media-transcoder` (v3.4.4).
+*   **Deadlocks:** `billing-service` (v2.16.6), `session-store` (v4.4.7), `payments-gateway` (v4.12.6).
+*   **Cache Leaks:** `search-index` (v4.10.2), `loyalty-engine` (v4.15.5).
+*   **Unbounded Retries:** `recommendation-engine` (v4.4.9), `checkout-api` (v3.4.2).
+*   **Thundering-Herd:** `inventory-sync` (v2.9.8), `catalog-api` (v4.11.6).
+*   **Missing Indexes:** `auth-broker` (v4.13.9), `shipping-calc` (v3.0.0).
+*   **Resource/Config:** `cart-service` (v4.3.1, connection pool exhaustion); `order-router` (v3.11.6, misconfigured circuit breaker).
+
+**Action Items:**
+*   **Scaling:** Maintain global auto-scaling in a disabled state until load-validated.
+*   **Configuration:** Audit and standardize settings within `/etc/<service>/config.yaml`.
+*   **Deployment:** Deploy automated regression gates to replace manual rollback procedures.
+
+--- round 6 (1165 chars) ---
+Between 2026-01-06 and 2026-10-24, 16 synchronous dependency failures occurred during high-load periods (85%–97% utilization), requiring manual rollbacks.
+
+**Root Cause Summary by Service:**
+*   **Disk Exhaustion:** `notification-hub` (v2.19.3), `fraud-scorer` (v2.3.3), `media-transcoder` (v3.4.4).
+*   **Deadlocks:** `billing-service` (v2.16.6), `session-store` (v4.4.7), `payments-gateway` (v4.12.6).
+*   **Cache Leaks:** `search-index` (v4.10.2), `loyalty-engine` (v4.15.5).
+*   **Unbounded Retries:** `recommendation-engine` (v4.4.9), `checkout-api` (v3.4.2).
+*   **Thundering-Herd:** `inventory-sync` (v2.9.8), `catalog-api` (v4.11.6).
+*   **Missing Indexes:** `auth-broker` (v4.13.9), `shipping-calc` (v3.0.0).
+*   **Resource/Config:** `cart-service` (v4.3.1, connection pool exhaustion); `order-router` (v3.11.6, misconfigured circuit breaker).
+
+**Required Action Items:**
+*   **Scaling:** Keep global auto-scaling disabled until load validation is complete.
+*   **Configuration:** Audit and standardize all settings located in `/etc/<service>/config.yaml`.
+*   **Deployment:** Implement automated regression gates to eliminate reliance on manual rollbacks.
+
+--- round 7 (1118 chars) ---
+Between 2026-01-06 and 2026-10-24, 16 synchronous dependency failures occurred during high-load (85%–97% utilization), necessitating manual rollbacks.
+
+### Root Cause Breakdown
+*   **Disk Exhaustion:** `notification-hub` (v2.19.3), `fraud-scorer` (v2.3.3), `media-transcoder` (v3.4.4).
+*   **Deadlocks:** `billing-service` (v2.16.6), `session-store` (v4.4.7), `payments-gateway` (v4.12.6).
+*   **Cache Leaks:** `search-index` (v4.10.2), `loyalty-engine` (v4.15.5).
+*   **Unbounded Retries:** `recommendation-engine` (v4.4.9), `checkout-api` (v3.4.2).
+*   **Thundering-Herd:** `inventory-sync` (v2.9.8), `catalog-api` (v4.11.6).
+*   **Missing Indexes:** `auth-broker` (v4.13.9), `shipping-calc` (v3.0.0).
+*   **Resource/Config:** `cart-service` (v4.3.1, connection pool exhaustion); `order-router` (v3.11.6, circuit breaker misconfiguration).
+
+### Required Actions
+*   **Infrastructure:** Disable global auto-scaling pending load validation.
+*   **Configuration:** Audit and standardize all files in `/etc/<service>/config.yaml`.
+*   **Process:** Deploy automated regression gates to replace manual rollback procedures.
+
+--- round 8 (1128 chars) ---
+Between 2026-01-06 and 2026-10-24, 16 synchronous dependency failures occurred under high load (85%–97% utilization), requiring manual rollbacks.
+
+### Root Cause Analysis
+*   **Disk Exhaustion:** `notification-hub` (v2.19.3), `fraud-scorer` (v2.3.3), `media-transcoder` (v3.4.4).
+*   **Deadlocks:** `billing-service` (v2.16.6), `session-store` (v4.4.7), `payments-gateway` (v4.12.6).
+*   **Cache Leaks:** `search-index` (v4.10.2), `loyalty-engine` (v4.15.5).
+*   **Unbounded Retries:** `recommendation-engine` (v4.4.9), `checkout-api` (v3.4.2).
+*   **Thundering-Herd:** `inventory-sync` (v2.9.8), `catalog-api` (v4.11.6).
+*   **Missing Indexes:** `auth-broker` (v4.13.9), `shipping-calc` (v3.0.0).
+*   **Resource/Config:** `cart-service` (v4.3.1, connection pool exhaustion); `order-router` (v3.11.6, circuit breaker misconfiguration).
+
+### Remediation Items
+*   **Infrastructure:** Suspend global auto-scaling until load validation is completed.
+*   **Configuration:** Audit and standardize all `/etc/<service>/config.yaml` files.
+*   **Process:** Implement automated regression gates to eliminate manual rollback dependencies.
+
+--- round 9 (1106 chars) ---
+Between 2026-01-06 and 2026-10-24, 16 synchronous dependency failures occurred during 85%–97% utilization, necessitating manual rollbacks.
+
+**Root Causes by Service:**
+*   **Disk Exhaustion:** `notification-hub` (v2.19.3), `fraud-scorer` (v2.3.3), `media-transcoder` (v3.4.4).
+*   **Deadlocks:** `billing-service` (v2.16.6), `session-store` (v4.4.7), `payments-gateway` (v4.12.6).
+*   **Cache Leaks:** `search-index` (v4.10.2), `loyalty-engine` (v4.15.5).
+*   **Unbounded Retries:** `recommendation-engine` (v4.4.9), `checkout-api` (v3.4.2).
+*   **Thundering-Herd:** `inventory-sync` (v2.9.8), `catalog-api` (v4.11.6).
+*   **Missing Indexes:** `auth-broker` (v4.13.9), `shipping-calc` (v3.0.0).
+*   **Configuration/Resource:** `cart-service` (v4.3.1, connection pool exhaustion); `order-router` (v3.11.6, circuit breaker misconfiguration).
+
+**Action Items:**
+*   **Infrastructure:** Suspend global auto-scaling pending load validation.
+*   **Configuration:** Audit/standardize all `/etc/<service>/config.yaml` files.
+*   **Process:** Deploy automated regression gates to replace manual rollback procedures.
+
+--- round 10 (1111 chars) ---
+Between 2026-01-06 and 2026-10-24, 16 synchronous dependency failures occurred during high utilization (85%–97%), requiring manual rollbacks.
+
+### Root Causes by Service
+*   **Disk Exhaustion:** `notification-hub` (v2.19.3), `fraud-scorer` (v2.3.3), `media-transcoder` (v3.4.4).
+*   **Deadlocks:** `billing-service` (v2.16.6), `session-store` (v4.4.7), `payments-gateway` (v4.12.6).
+*   **Cache Leaks:** `search-index` (v4.10.2), `loyalty-engine` (v4.15.5).
+*   **Unbounded Retries:** `recommendation-engine` (v4.4.9), `checkout-api` (v3.4.2).
+*   **Thundering-Herd:** `inventory-sync` (v2.9.8), `catalog-api` (v4.11.6).
+*   **Missing Indexes:** `auth-broker` (v4.13.9), `shipping-calc` (v3.0.0).
+*   **Resource/Config:** `cart-service` (v4.3.1, connection pool exhaustion); `order-router` (v3.11.6, circuit breaker misconfiguration).
+
+### Action Items
+*   **Infrastructure:** Suspend global auto-scaling until load validation is complete.
+*   **Configuration:** Standardize all `/etc/<service>/config.yaml` files.
+*   **Process:** Implement automated regression gates to eliminate manual rollback dependencies.
+

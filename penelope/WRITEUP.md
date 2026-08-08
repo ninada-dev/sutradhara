@@ -1,13 +1,19 @@
 # The two-loop failure demo: the gap is real
 
-**Verdict up front:** the gap is real, and reproduced live on two independent,
+**Verdict up front:** the gap is real, reproduced live on two independent
 real durable-execution systems (Temporal and DBOS, both actually running,
-not mocked). Both report unconditional success on every step, across two
-separate runs on two separate backends, while a specific safety-critical
-fact — the name of the person originally paged for the incident — silently
-and completely disappears from the record by the second round of a
-six-round summarization loop, and never comes back. Neither system has any
-mechanism that could have caught this, by design, not by omission.
+not mocked), at two scales. At n=12 facts, both systems report unconditional
+success while a specific safety-critical fact — the name of the person
+originally paged for the incident — silently and completely disappears by
+round 2 and never returns. At n=208 facts (added specifically to get a real
+decay curve instead of ±8.3%-per-fact noise), the picture is worse and much
+more legible: the pipeline collapses through three distinct cliffs to a
+stable fixed point at **26% of the original information**, and every single
+person's name, every instance ID, every config path, and every port number
+is completely gone from what's left — while Temporal reports
+`COMPLETED` throughout, with a real execution history to show for it.
+Neither system has any mechanism that could have caught this, by design,
+not by omission.
 
 No existing tool was found that catches it. If you know of one, that's a
 more valuable result than this writeup — say so and I'll test it.
@@ -179,6 +185,110 @@ the deploy pipeline currently has no regression gate) was genuinely lost in
 both runs — replaced by a forward-looking "implement CI/CD gates"
 recommendation that doesn't restate why that gap currently exists.
 
+## Scaling up: what happens at every round, at n=208
+
+The 12-fact run makes the point but each fact is worth ±8.3% — not enough
+resolution to see the actual *shape* of the decay, only its endpoint. To
+see the shape, `big_facts.py` programmatically generates 16 incident
+reports in the same prose style (varied sentence templates per field, so
+it isn't a mechanical, trivially-preservable checklist), concatenated into
+one ~19,500-character, ~2,900-word document — a plausible "quarterly
+incident log" — carrying **208 independently checkable facts**, 13 per
+incident. Same compaction prompt, same Temporal server and worker, same
+`UpstreamCompactionWorkflow`, just `rounds=10` and a bigger seed. Both
+workflows again reported `WORKFLOW_EXECUTION_STATUS_COMPLETED` (real
+history length: 65 events, zero retries, zero failures) and the downstream
+write again reported success.
+
+**What actually happened, round by round — this is the entire finding, in
+the system's own words, not summarized by me:**
+
+```
+round  0: 208/208 survived (100.0%)  chars=19539
+round  1: 116/208 survived ( 55.8%)  chars= 2723  <- first compaction: 92 facts gone in one pass
+round  2: 116/208 survived ( 55.8%)  chars= 2330  <- stable
+round  3:  70/208 survived ( 33.7%)  chars= 1304  <- second cliff: dates, dollar impacts, ports gone
+round  4:  54/208 survived ( 26.0%)  chars= 1227  <- third cliff: "manual rollback" fact gone, all 16 incidents
+round  5:  54/208 survived ( 26.0%)  chars= 1120  <- stable
+round  6:  54/208 survived ( 26.0%)  chars= 1165  <- stable
+round  7:  54/208 survived ( 26.0%)  chars= 1118  <- stable
+round  8:  54/208 survived ( 26.0%)  chars= 1128  <- stable
+round  9:  54/208 survived ( 26.0%)  chars= 1106  <- stable
+round 10:  54/208 survived ( 26.0%)  chars= 1111  <- stable (final; written to durable memory)
+```
+
+This is not a slope. It's three sharp cliffs (round 1, round 3, round 4)
+separated by stable plateaus, converging to a **fixed point at 26% of the
+original information** that the summarizer then reproduces faithfully,
+round after round, forever — round 10 is 1111 characters, round 5 was 1120;
+once the pipeline reaches this attractor it stops losing anything further,
+because there's an internally-consistent 54-fact summary that the model
+now treats as ground truth and just re-summarizes losslessly from there.
+That stability is itself worth noting: it would be easy to mistake "the
+summary stopped changing much" for "the summary has converged on what
+matters." It hasn't — it converged on whatever survived the first three
+cliffs, which is a very different thing.
+
+**What kind of information survives the cliffs, broken out by fact type
+(measured at the round-10 plateau, 16 incidents each):**
+
+| Fact type | Survived | Rate |
+|---|---|---|
+| bad_version | 16/16 | 100% |
+| autoscale constraint | 16/16 | 100% |
+| root-cause category | 15/16 | 94% |
+| threshold % | 4/16 | 25% |
+| incident date | 2/16 | 13% |
+| rollback (good) version | 1/16 | 6% |
+| escalation contact's name | 0/16 | **0%** |
+| on-call contact's name | 0/16 | **0%** |
+| instance ID | 0/16 | **0%** |
+| config file path | 0/16 | **0%** |
+| port number | 0/16 | **0%** |
+| dollar impact | 0/16 | **0%** |
+| "rollback was manual, pipeline lacks a gate" | 0/16 | **0%** |
+
+The pattern is not random attrition — it's systematic. Categorical,
+groupable facts (which service, what kind of root cause, which bad
+version) survive because the model reorganized the entire document around
+them: the round-10 text is literally structured as "### Root Causes by
+Service," grouped by failure category. Facts that don't fit that
+organizing structure — identifiers, names, paths, individual dollar
+figures, individual timestamps — are absent from all 16 incidents
+simultaneously, not just a random few. **Every person who was ever paged
+for any of these 16 incidents is gone.** Here is the complete text that
+was actually written into durable memory, in full:
+
+> Between 2026-01-06 and 2026-10-24, 16 synchronous dependency failures
+> occurred during high utilization (85%–97%), requiring manual rollbacks.
+>
+> ### Root Causes by Service
+> - **Disk Exhaustion:** `notification-hub` (v2.19.3), `fraud-scorer`
+>   (v2.3.3), `media-transcoder` (v3.4.4).
+> - **Deadlocks:** `billing-service` (v2.16.6), `session-store` (v4.4.7),
+>   `payments-gateway` (v4.12.6).
+> - **Cache Leaks:** `search-index` (v4.10.2), `loyalty-engine` (v4.15.5).
+> - **Unbounded Retries:** `recommendation-engine` (v4.4.9), `checkout-api`
+>   (v3.4.2).
+> - **Thundering-Herd:** `inventory-sync` (v2.9.8), `catalog-api` (v4.11.6).
+> - **Missing Indexes:** `auth-broker` (v4.13.9), `shipping-calc` (v3.0.0).
+> - **Resource/Config:** `cart-service` (v4.3.1, connection pool
+>   exhaustion); `order-router` (v3.11.6, circuit breaker misconfiguration).
+>
+> ### Action Items
+> - **Infrastructure:** Suspend global auto-scaling until load validation
+>   is complete.
+> - **Configuration:** Standardize all `/etc/<service>/config.yaml` files.
+> - **Process:** Implement automated regression gates to eliminate manual
+>   rollback dependencies.
+
+If someone later needs to know who to ask about the `payments-gateway`
+deadlock, or where its config actually lives, or what the incident cost —
+that information isn't degraded, it's gone, replaced by a clean, plausible,
+well-organized document that reads like it has everything. Temporal's
+`describe` output for this exact run says `COMPLETED`. It's correct. That's
+the whole problem.
+
 ## Honesty about the method
 
 - The fact checker (`facts.py`) is a blunt, substring-based instrument by
@@ -205,26 +315,35 @@ recommendation that doesn't restate why that gap currently exists.
 
 ## What this means for Penelope
 
-The load-bearing assumption holds, on two independent real systems, with a
-result clean enough that a single unambiguous fact (a person's name) is
-sufficient evidence on its own, without needing the more ambiguous
-secondary findings. Temporal and DBOS are correct and complete on their own
-terms — step completion and idempotent replay — and neither one, by design,
-has a mechanism that could have caught either the outright loss of
-`on_call_person` or the silent rationale-substitution on the auto-scaling
-directive. Whatever Penelope is meant to add on top of durable execution —
+The load-bearing assumption holds, on two independent real systems, at two
+scales. At n=12 it's clean enough that a single unambiguous fact (a
+person's name) is sufficient evidence on its own. At n=208 it stops being a
+narrow edge case and becomes the dominant behavior: 74% of all information
+gone by a stable fixed point, every identifying detail (who, which
+instance, which config path, which port, what it cost) erased across all
+16 incidents simultaneously, replaced by a well-organized, fluent document
+that gives no indication anything is missing. Temporal and DBOS are correct
+and complete on their own terms — step completion and idempotent replay —
+and neither one, by design, has a mechanism that could have caught any of
+this: not the outright loss of `on_call_person`, not the silent
+rationale-substitution on the auto-scaling directive, not 74% of a
+quarter's incident history quietly evaporating into a converged, confident
+26%. Whatever Penelope is meant to add on top of durable execution —
 output-quality tracking across chained steps, not just step-completion
-tracking — is not redundant with what these systems already do.
+tracking — is not redundant with what these systems already do, and the
+scaled-up result suggests the gap isn't a corner case worth a footnote —
+it's close to the default outcome of chaining lossy steps at all.
 
 ## Reproducing this
 
 ```
 penelope/
-  facts.py              # seed document + independent fact checker (ground truth)
-  gemini.py              # standalone Gemini client (not shared with sutradhara)
-  pipeline.py            # the actual compact/write-memory logic, framework-agnostic
+  facts.py               # 12-fact seed document + independent checker (ground truth)
+  big_facts.py            # 208-fact generator: 16 templated incidents, real decay curve
+  gemini.py               # standalone Gemini client (not shared with sutradhara)
+  pipeline.py             # the actual compact/write-memory logic, framework-agnostic
   temporal_repro/
-    activities.py workflows.py worker.py run_repro.py
+    activities.py workflows.py worker.py run_repro.py run_big_repro.py
   dbos_repro/
     app.py
 ```
@@ -237,7 +356,8 @@ pip install temporalio dbos psycopg2-binary
 # Temporal
 temporal server start-dev &
 (cd temporal_repro && python3 worker.py &)
-cd temporal_repro && python3 run_repro.py
+cd temporal_repro && python3 run_repro.py       # 12-fact version
+cd temporal_repro && python3 run_big_repro.py   # 208-fact version, logs every round's deltas
 
 # DBOS (needs a local Postgres; see app.py's DB_URL)
 cd dbos_repro && python3 app.py
